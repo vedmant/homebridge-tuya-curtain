@@ -1,0 +1,37 @@
+{
+  "displayName": "Homebridge Tuya Curtain",
+  "name": "homebridge-tuya-curtain",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "type": "module",
+  "keywords": [
+    "homebridge-plugin"
+  ],
+  "scripts": {
+    "lint": "eslint src/**/*.ts --max-warnings=0",
+    "watch": "yarn build && yarn link && nodemon",
+    "build": "rimraf ./dist && tsc",
+    "prepublishOnly": "yarn lint && yarn build"
+  },
+  "engines": {
+    "node": "^18.17.0 || ^20.9.0",
+    "homebridge": "^1.8.0"
+  },
+  "dependencies": {
+    "@tuya/tuya-connector-nodejs": "^2.1.2",
+    "lodash-es": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
+    "@types/node": "^20.12.13",
+    "@typescript-eslint/eslint-plugin": "^7.11.0",
+    "@typescript-eslint/parser": "^7.11.0",
+    "eslint": "^8.57.0",
+    "homebridge": "^1.8.2",
+    "nodemon": "^3.1.2",
+    "rimraf": "^5.0.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}

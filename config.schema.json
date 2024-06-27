@@ -1,0 +1,16 @@
+{
+  "pluginAlias": "HomebridgeTuyaCurtain",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "required": true,
+        "default": "Homebridge Tuya Curtain"
+      }
+    }
+  }
+}
