@@ -65,9 +65,9 @@ export class ExamplePlatformAccessory {
       .onGet(this.handleTargetPositionGet.bind(this))
       .onSet(this.handleTargetPositionSet.bind(this))
 
-    // Load adn set initial position
+    // Load and set initial position
     ;(async () => {
-      this.exampleStates.target_position = 100 - (await this.getProperty('percent_state'))
+      this.exampleStates.target_position = await this.getProperty('percent_state')
     })()
   }
 
@@ -86,13 +86,12 @@ export class ExamplePlatformAccessory {
       }
 
       let pos = await this.getProperty('percent_state', false)
-      pos = 100 - pos
       const state = this.getStateByPosition(pos)
       this.service.updateCharacteristic(this.platform.Characteristic.CurrentPosition, pos)
       this.service.updateCharacteristic(this.platform.Characteristic.PositionState, state)
 
       this.platform.log.debug('Updated current position:', pos)
-      this.platform.log.debug('Updated position state:', state)
+      this.platform.log.debug('Updated position state:', pos)
       num ++
     }, 4000)
   }
@@ -113,6 +112,10 @@ export class ExamplePlatformAccessory {
 
     const property = props.find((p: any) => p.code === code)
 
+    if (code === 'percent_state') {
+      property.value = 100 - property.value
+    }
+
     this.platform.log('getProperty: ' + code + ': ' + JSON.stringify(property?.value))
 
     return property?.value
@@ -120,16 +123,15 @@ export class ExamplePlatformAccessory {
 
   async handleCurrentPositionGet() {
     let value = await this.getProperty('percent_state')
-    value = 100 - value
     this.platform.log.debug('Triggered GET CurrentPosition: ' + value)
 
     return value
   }
 
   getStateByPosition (pos: number) {
-    if (pos === this.exampleStates.target_position) return this.platform.Characteristic.PositionState.STOPPED
-    if (pos < 20) pos = 0
-    if (pos > 80) pos = 100
+    if (pos === this.exampleStates.target_position || pos < 20 || pos > 80) {
+      return this.platform.Characteristic.PositionState.STOPPED
+    }
 
     return pos > this.exampleStates.target_position
       ? this.platform.Characteristic.PositionState.INCREASING
@@ -138,7 +140,6 @@ export class ExamplePlatformAccessory {
 
   async handlePositionStateGet() {
     let pos = await this.getProperty('percent_state')
-    pos = 100 - pos
 
     const state = this.getStateByPosition(pos)
 
