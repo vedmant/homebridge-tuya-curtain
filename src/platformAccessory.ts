@@ -1,7 +1,6 @@
 import { PlatformAccessory, Service } from 'homebridge'
 import { ExampleHomebridgePlatform } from './platform.js'
-import { TuyaContext } from '@tuya/tuya-connector-nodejs'
-import { debounce } from 'lodash-es'
+import TuyaApi from './TuyaApi.js'
 
 /**
  * Platform Accessory
@@ -11,7 +10,6 @@ import { debounce } from 'lodash-es'
 export class ExamplePlatformAccessory {
   private service: Service
   private api: any
-  private getPropsDebounce: Function
   private updating: boolean = false
 
   /**
@@ -26,13 +24,7 @@ export class ExamplePlatformAccessory {
     private readonly platform: ExampleHomebridgePlatform,
     private readonly accessory: PlatformAccessory,
   ) {
-    this.api = new TuyaContext({
-      baseUrl: 'https://openapi.tuyaus.com',
-      accessKey: 'jvmdqw83uqt8pgrkyhqm',
-      secretKey: '1a65d3a11197471ebe4ca90ff1adc398',
-    })
-
-    this.getPropsDebounce = debounce(this.getProps, 1000, { leading: true, trailing: false })
+    this.api = new TuyaApi(platform, 'eb2b765f623196b2b9gse1')
 
     // set accessory information
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
@@ -55,8 +47,8 @@ export class ExamplePlatformAccessory {
     this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition)
       .onGet(this.handleCurrentPositionGet.bind(this))
 
-    this.service.getCharacteristic(this.platform.Characteristic.PositionState)
-      .onGet(this.handlePositionStateGet.bind(this))
+    // this.service.getCharacteristic(this.platform.Characteristic.PositionState)
+    //   .onGet(this.handlePositionStateGet.bind(this))
 
     this.service.getCharacteristic(this.platform.Characteristic.BatteryLevel)
       .onGet(this.getBatteryLevel.bind(this))
@@ -65,10 +57,18 @@ export class ExamplePlatformAccessory {
       .onGet(this.handleTargetPositionGet.bind(this))
       .onSet(this.handleTargetPositionSet.bind(this))
 
+    this.service.getCharacteristic(this.platform.Characteristic.HoldPosition)
+      .onGet(this.handleHoldPositionGet.bind(this))
+      .onSet(this.handleHoldPositionSet.bind(this))
+
     // Load and set initial position
     ;(async () => {
-      this.exampleStates.target_position = await this.getProperty('percent_state')
+      this.exampleStates.target_position = await this.api.getProperty('percent_state')
     })()
+
+    // setInterval(async () => {
+    //   this.service.updateCharacteristic(this.platform.Characteristic.TargetPosition, this.exampleStates.target_position)
+    // }, 10000)
   }
 
   startUpdate () {
@@ -85,10 +85,10 @@ export class ExamplePlatformAccessory {
         return
       }
 
-      let pos = await this.getProperty('percent_state', false)
-      const state = this.getStateByPosition(pos)
+      let pos = await this.api.getProperty('percent_state', false)
+      // const state = this.getStateByPosition(pos)
       this.service.updateCharacteristic(this.platform.Characteristic.CurrentPosition, pos)
-      this.service.updateCharacteristic(this.platform.Characteristic.PositionState, state)
+      // this.service.updateCharacteristic(this.platform.Characteristic.PositionState, state)
 
       this.platform.log.debug('Updated current position:', pos)
       this.platform.log.debug('Updated position state:', pos)
@@ -96,33 +96,8 @@ export class ExamplePlatformAccessory {
     }, 4000)
   }
 
-  async getProps () {
-    const data = await this.api.request({
-      path: `/v2.0/cloud/thing/eb2b765f623196b2b9gse1/shadow/properties`,
-      method: 'GET',
-    })
-
-    this.platform.log('getProps: ' + JSON.stringify(data.result.properties))
-
-    return data.result.properties
-  }
-
-  async getProperty(code: string, debounce = true) {
-    const props = debounce ? await this.getPropsDebounce() : await this.getProps()
-
-    const property = props.find((p: any) => p.code === code)
-
-    if (code === 'percent_state') {
-      property.value = 100 - property.value
-    }
-
-    this.platform.log('getProperty: ' + code + ': ' + JSON.stringify(property?.value))
-
-    return property?.value
-  }
-
   async handleCurrentPositionGet() {
-    let value = await this.getProperty('percent_state')
+    let value = await this.api.getProperty('percent_state')
     this.platform.log.debug('Triggered GET CurrentPosition: ' + value)
 
     return value
@@ -139,7 +114,7 @@ export class ExamplePlatformAccessory {
   }
 
   async handlePositionStateGet() {
-    let pos = await this.getProperty('percent_state')
+    let pos = await this.api.getProperty('percent_state')
 
     const state = this.getStateByPosition(pos)
 
@@ -156,11 +131,7 @@ export class ExamplePlatformAccessory {
 
   async handleTargetPositionSet(value: any) {
     value = 100 - value
-    await this.api.request({
-      path: `/v2.0/cloud/thing/eb2b765f623196b2b9gse1/shadow/properties/issue`,
-      method: 'POST',
-      body: { properties: JSON.stringify({ percent_control: value }) },
-    })
+    await this.api.setProperty('percent_control', value)
 
     this.exampleStates.target_position = value
 
@@ -169,10 +140,26 @@ export class ExamplePlatformAccessory {
   }
 
   async getBatteryLevel() {
-    const value = await this.getProperty('battery_percentage')
+    const value = await this.api.getProperty('battery_percentage')
 
     this.platform.log.debug('Triggered GET getBatteryLevel:' + value)
 
     return value
+  }
+
+  handleHoldPositionGet() {
+    this.platform.log.debug('Triggered GET HoldPositionGet:' + this.exampleStates.target_position)
+
+    return 'stop'
+  }
+
+  async handleHoldPositionSet(value: any) {
+    this.platform.log.debug('Triggered SET HoldPositionSet: ' + value)
+
+    // await this.api.request({
+    //   path: `/v2.0/cloud/thing/eb2b765f623196b2b9gse1/shadow/properties/issue`,
+    //   method: 'POST',
+    //   body: { properties: JSON.stringify({ control: value }) },
+    // })
   }
 }
