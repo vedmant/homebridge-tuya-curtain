@@ -27,12 +27,16 @@ export class CurtainSwitchAccessory {
     // you can create multiple services for each accessory
     this.service = accessory.getService(platform.Service.Outlet) || accessory.addService(platform.Service.Outlet)
 
-    // const service2 = this.accessory.getService('Curtain switch2') ||
-    //   this.accessory.addService(this.platform.Service.StatefulProgrammableSwitch, 'Curtain switch2', 'YourUniqueIdentifier-1');
+    const service2 = this.accessory.getService('Silent') ||
+      this.accessory.addService(this.platform.Service.Outlet, 'Silent', 'YourUniqueIdentifier-1');
+
+    service2.getCharacteristic(platform.Characteristic.On)
+      .onGet(async () => (await this.api.getProperty('mode') === 'normal'))
+      .onSet(async (value: any) => (await this.api.setProperty('mode', value ? 'normal' : 'strong')))
 
     // set the service name, this is what is displayed as the default name on the Home app
     // in this example we are using the name we stored in the `accessory.context` in the `discoverDevices` method.
-    this.service.setCharacteristic(platform.Characteristic.Name, 'Curtain switch')
+    this.service.setCharacteristic(platform.Characteristic.Name, 'Switch')
 
     this.service.getCharacteristic(platform.Characteristic.BatteryLevel)
       .onGet(this.getBatteryLevel.bind(this))

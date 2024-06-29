@@ -1,4 +1,4 @@
-const { TuyaContext } = require('@tuya/tuya-connector-nodejs')
+import { TuyaContext } from '@tuya/tuya-connector-nodejs'
 
 const context = new TuyaContext({
   baseUrl: 'https://openapi.tuyaus.com',
@@ -17,10 +17,10 @@ async function test () {
   //   method: 'GET',
   // }), null, 2))
 
-  // console.log(JSON.stringify(await context.request({
-  //   path: `/v2.0/cloud/thing/eb2b765f623196b2b9gse1/model`,
-  //   method: 'GET',
-  // }), null, 2))
+  console.log(JSON.stringify(await context.request({
+    path: `/v2.0/cloud/thing/eb2b765f623196b2b9gse1/model`,
+    method: 'GET',
+  }), null, 2))
 
   // console.log(await context.request({
   //   path: `/v2.0/cloud/thing/eb2b765f623196b2b9gse1/shadow/actions`,

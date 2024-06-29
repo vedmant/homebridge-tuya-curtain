@@ -74,7 +74,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     // or a user-defined array in the platform config.
     const exampleDevices = [
       {
-        exampleUniqueId: 'eb2b765f623196b2b9gse1',
+        exampleUniqueId: 'eb2b765f623196b2b9gse1-1',
         exampleDisplayName: 'Curtain',
         type: 'curtain',
       },
